@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Paper Trading API is a Node.js-based application designed for simulating cryptocurrency trades using real-time market data from Binance. This API allows users to create accounts, execute trades, monitor active trades, and retrieve trade histories, making it a useful tool for testing trading strategies without the risk of actual financial loss.
+The Paper Trading API is a Node.js-based application designed for simulating cryptocurrency trades using real-time market data from Binance. This API currently works exclusively for BTCUSDT, allowing users to create accounts, execute trades, monitor active trades, and retrieve trade histories, making it a useful tool for testing trading strategies without the risk of actual financial loss.
 
 ## Features
 
@@ -72,7 +72,7 @@ The server will start running at `http://localhost:3000`.
 
 ### Watchdog Process
 
-The application includes a watchdog process that monitors the API to ensure smooth operation. It is initiated alongside the API server:
+The application includes a watchdog process that monitors the Bitcoin Pricing live and executes TP/SL accordingly. It is initiated alongside the API server:
 
 ```bash
 node API/watchdog.js
