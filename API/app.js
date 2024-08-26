@@ -179,7 +179,7 @@ app.post("/exitTrade", (req, res) => {
 });
 
 app.get("/getTradeHistory", (req, res) => {
-	const { accountUuid } = req.query;
+	const { accountUuid, page = 1, limit = 10 } = req.query;
 
 	if (!accountUuid) {
 		return res.status(400).json({
@@ -198,10 +198,16 @@ app.get("/getTradeHistory", (req, res) => {
 	}
 
 	const accountData = JSON.parse(fs.readFileSync(filePath));
+	const startIndex = (page - 1) * limit;
+	const endIndex = startIndex + limit;
+	const paginatedHistory = accountData.positionHistory.slice(startIndex, endIndex);
 
 	res.json({
 		success: true,
-		tradeHistory: accountData.positionHistory,
+		tradeHistory: paginatedHistory,
+		totalTrades: accountData.positionHistory.length,
+		page: parseInt(page),
+		limit: parseInt(limit),
 	});
 });
 
@@ -225,10 +231,11 @@ app.get("/getAccountInfo", (req, res) => {
 	}
 
 	const accountData = JSON.parse(fs.readFileSync(filePath));
+	const { positionHistory, ...accountInfo } = accountData;
 
 	res.json({
 		success: true,
-		accountInfo: accountData,
+		accountInfo: accountInfo,
 	});
 });
 
@@ -319,35 +326,6 @@ app.put("/updateAccountInfo", (req, res) => {
 	});
 });
 
-app.get("/getAllAccountList", (req, res) => {
-	const accountsDir = path.join(__dirname, "../accounts");
-
-	fs.readdir(accountsDir, (err, files) => {
-		if (err) {
-			return res.status(500).json({
-				success: false,
-				message: "Error reading accounts directory",
-			});
-		}
-
-		const accountList = files.map((file) => {
-			const filePath = path.join(accountsDir, file);
-			const accountData = JSON.parse(fs.readFileSync(filePath));
-			return {
-				uuid: accountData.uuid,
-				name: accountData.name,
-				balance: accountData.balance,
-				creationTime: accountData.creationTime,
-			};
-		});
-
-		res.json({
-			success: true,
-			accounts: accountList,
-		});
-	});
-});
-
 app.listen(port, () => {
-	console.log(`Server running on http://localhost:${port}`);
+	console.log(`Server running on port ${port}`);
 });
