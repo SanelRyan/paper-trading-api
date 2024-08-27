@@ -27,7 +27,7 @@ app.get("/createAccount", (req, res) => {
 	const accountData = {
 		uuid: accountUuid,
 		name: accountName,
-		balance: startingBalance,
+		balance: Number(startingBalance),
 		creationTime: creationTime,
 		currentTrade: {},
 		positionHistory: [],
@@ -198,16 +198,34 @@ app.get("/getTradeHistory", (req, res) => {
 	}
 
 	const accountData = JSON.parse(fs.readFileSync(filePath));
-	const startIndex = (page - 1) * limit;
-	const endIndex = startIndex + limit;
-	const paginatedHistory = accountData.positionHistory.slice(startIndex, endIndex);
+	const totalTrades = accountData.positionHistory.length;
+
+	const parsedPage = parseInt(page);
+	const parsedLimit = parseInt(limit);
+
+	const maxPages = Math.ceil(totalTrades / parsedLimit);
+	let index, offSet;
+
+	if (parsedPage <= 1) {
+		index = 0;
+		offSet = parsedLimit;
+	} else if (parsedPage > maxPages) {
+		index = (maxPages - 1) * parsedLimit;
+		offSet = totalTrades;
+	} else {
+		index = (parsedPage - 1) * parsedLimit;
+		offSet = index + parsedLimit;
+	}
+
+	const paginatedHistory = accountData.positionHistory.slice(index, offSet);
 
 	res.json({
 		success: true,
 		tradeHistory: paginatedHistory,
-		totalTrades: accountData.positionHistory.length,
-		page: parseInt(page),
-		limit: parseInt(limit),
+		totalTrades: totalTrades,
+		maxPages: maxPages,
+		page: parsedPage,
+		limit: parsedLimit,
 	});
 });
 
