@@ -326,6 +326,35 @@ app.put("/updateAccountInfo", (req, res) => {
 	});
 });
 
+app.get("/getAllAccountList", (req, res) => {
+	const accountsDir = path.join(__dirname, "../accounts");
+
+	fs.readdir(accountsDir, (err, files) => {
+		if (err) {
+			return res.status(500).json({
+				success: false,
+				message: "Error reading accounts directory",
+			});
+		}
+
+		const accountList = files.map((file) => {
+			const filePath = path.join(accountsDir, file);
+			const accountData = JSON.parse(fs.readFileSync(filePath));
+			return {
+				uuid: accountData.uuid,
+				name: accountData.name,
+				balance: accountData.balance,
+				creationTime: accountData.creationTime,
+			};
+		});
+
+		res.json({
+			success: true,
+			accounts: accountList,
+		});
+	});
+});
+
 app.listen(port, () => {
 	console.log(`Server running on port ${port}`);
 });
