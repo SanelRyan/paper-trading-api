@@ -27,7 +27,7 @@ The Paper Trading API is a Node.js-based application designed for simulating cry
 1. Clone the repository:
 
     ```bash
-    git clone https://github.com/your-repo/paper-trading-api.git
+    git clone https://github.com/SanelRyan/paper-trading-api.git
     cd paper-trading-api
     ```
 
@@ -69,6 +69,9 @@ The server will start running at `http://localhost:3000`.
 -   **DELETE /deleteAccount**: Delete an account.
 -   **PUT /updateAccountInfo**: Update the name of an account.
 -   **GET /getAllAccountList**: Retrieve a list of all accounts.
+-   **GET /getFinancialInfo**: Get financial information about an account.
+-   **GET /getCurrentTrade**: Retrieve information about the current active trade of an account.
+-   **GET /getCumulativeBalance**: Get the cumulative balance history of an account.
 
 ### Watchdog Process
 
