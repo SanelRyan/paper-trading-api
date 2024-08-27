@@ -373,6 +373,154 @@ app.get("/getAllAccountList", (req, res) => {
 	});
 });
 
+app.get("/getFinancialInfo", (req, res) => {
+	const { accountUuid } = req.query;
+
+	if (!accountUuid) {
+		return res.status(400).json({
+			success: false,
+			message: "Missing accountUuid",
+		});
+	}
+
+	const filePath = path.join(__dirname, "../accounts", `${accountUuid}.json`);
+
+	if (!fs.existsSync(filePath)) {
+		return res.status(404).json({
+			success: false,
+			message: "Account not found",
+		});
+	}
+
+	const accountData = JSON.parse(fs.readFileSync(filePath));
+	const { balance, positionHistory } = accountData;
+
+	let totalNetProfit = 0;
+	let grossProfit = 0;
+	let grossLoss = 0;
+	let numberWinningTrades = 0;
+	let numberLosingTrades = 0;
+	let largestWinningTrade = -Infinity;
+	let largestLosingTrade = Infinity;
+	let totalWinningTrades = 0;
+	let totalLosingTrades = 0;
+
+	positionHistory.forEach((trade) => {
+		const { pnl, percentage_pnl } = trade;
+		totalNetProfit += pnl;
+
+		if (pnl > 0) {
+			grossProfit += pnl;
+			numberWinningTrades++;
+			largestWinningTrade = Math.max(largestWinningTrade, pnl);
+			totalWinningTrades += pnl;
+		} else {
+			grossLoss += Math.abs(pnl);
+			numberLosingTrades++;
+			largestLosingTrade = Math.min(largestLosingTrade, pnl);
+			totalLosingTrades += Math.abs(pnl);
+		}
+	});
+
+	const totalTrades = positionHistory.length;
+	const percentProfitable = totalTrades > 0 ? ((numberWinningTrades / totalTrades) * 100).toFixed(2) : 0;
+	const avgWinningTrade = numberWinningTrades > 0 ? (totalWinningTrades / numberWinningTrades).toFixed(2) : 0;
+	const avgLosingTrade = numberLosingTrades > 0 ? (totalLosingTrades / numberLosingTrades).toFixed(2) : 0;
+
+	res.json({
+		success: true,
+		financialInfo: {
+			balance: balance,
+			totalNetProfit: totalNetProfit.toFixed(2),
+			grossProfit: grossProfit.toFixed(2),
+			grossLoss: grossLoss.toFixed(2),
+			totalTrades: totalTrades,
+			percentProfitable: percentProfitable,
+			numberWinningTrades: numberWinningTrades,
+			numberLosingTrades: numberLosingTrades,
+			largestWinningTrade: largestWinningTrade === -Infinity ? 0 : largestWinningTrade.toFixed(2),
+			largestLosingTrade: largestLosingTrade === Infinity ? 0 : largestLosingTrade.toFixed(2),
+			avgWinningTrade: avgWinningTrade,
+			avgLosingTrade: avgLosingTrade,
+		},
+	});
+});
+
+app.get("/getCurrentTrade", (req, res) => {
+	const { accountUuid } = req.query;
+
+	if (!accountUuid) {
+		return res.status(400).json({
+			success: false,
+			message: "Missing accountUuid",
+		});
+	}
+
+	const filePath = path.join(__dirname, "../accounts", `${accountUuid}.json`);
+
+	if (!fs.existsSync(filePath)) {
+		return res.status(404).json({
+			success: false,
+			message: "Account not found",
+		});
+	}
+
+	const accountData = JSON.parse(fs.readFileSync(filePath));
+	const currentTrade = accountData.currentTrade;
+
+	if (!currentTrade || Object.keys(currentTrade).length === 0) {
+		return res.status(404).json({
+			success: false,
+			message: "No active trade found",
+		});
+	}
+
+	res.json({
+		success: true,
+		currentTrade: currentTrade,
+	});
+});
+
+app.get("/getCumulativeBalance", (req, res) => {
+	const { accountUuid } = req.query;
+
+	if (!accountUuid) {
+		return res.status(400).json({
+			success: false,
+			message: "Missing accountUuid",
+		});
+	}
+
+	const filePath = path.join(__dirname, "../accounts", `${accountUuid}.json`);
+
+	if (!fs.existsSync(filePath)) {
+		return res.status(404).json({
+			success: false,
+			message: "Account not found",
+		});
+	}
+
+	const accountData = JSON.parse(fs.readFileSync(filePath));
+	const { balance, positionHistory } = accountData;
+
+	let cumulativeBalance = balance;
+	let balanceHistory = [{ date: accountData.creationTime, balance: cumulativeBalance }];
+
+	positionHistory.forEach((trade) => {
+		const { pnl, time } = trade;
+		cumulativeBalance += pnl;
+		balanceHistory.push({
+			date: new Date(time).toISOString(),
+			balance: cumulativeBalance,
+		});
+	});
+
+	res.json({
+		success: true,
+		cumulativeBalanceHistory: balanceHistory,
+	});
+});
+
 app.listen(port, () => {
 	console.log(`Server running on port ${port}`);
 });
