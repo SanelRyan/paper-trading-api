@@ -394,7 +394,7 @@ app.get("/getFinancialInfo", (req, res) => {
 	}
 
 	const accountData = JSON.parse(fs.readFileSync(filePath));
-	const { startingBalance, positionHistory } = accountData;
+	const { startingBalance, balance, positionHistory } = accountData;
 
 	let totalNetProfit = 0;
 	let grossProfit = 0;
@@ -414,33 +414,35 @@ app.get("/getFinancialInfo", (req, res) => {
 			grossProfit += pnl;
 			numberWinningTrades++;
 			largestWinningTrade = Math.max(largestWinningTrade, pnl);
-			totalWinningTrades += percentage_pnl;
+			totalWinningTrades += pnl;
 		} else {
-			grossLoss += pnl;
+			grossLoss += Math.abs(pnl);
 			numberLosingTrades++;
 			largestLosingTrade = Math.min(largestLosingTrade, pnl);
-			totalLosingTrades += percentage_pnl;
+			totalLosingTrades += Math.abs(pnl);
 		}
 	});
 
-	const percentage_net_profit = parseFloat(((totalNetProfit / startingBalance) * 100).toFixed(2));
-	const accountEquity = parseFloat((startingBalance + totalNetProfit).toFixed(2));
+	const totalTrades = positionHistory.length;
+	const percentProfitable = totalTrades > 0 ? ((numberWinningTrades / totalTrades) * 100).toFixed(2) : 0;
+	const avgWinningTrade = numberWinningTrades > 0 ? (totalWinningTrades / numberWinningTrades).toFixed(2) : 0;
+	const avgLosingTrade = numberLosingTrades > 0 ? (totalLosingTrades / numberLosingTrades).toFixed(2) : 0;
 
 	res.json({
 		success: true,
 		financialInfo: {
-			startingBalance: startingBalance,
-			totalNetProfit: totalNetProfit,
-			percentageNetProfit: percentage_net_profit,
-			grossProfit: grossProfit,
-			grossLoss: grossLoss,
-			accountEquity: accountEquity,
+			balance: balance,
+			totalNetProfit: totalNetProfit.toFixed(2),
+			grossProfit: grossProfit.toFixed(2),
+			grossLoss: grossLoss.toFixed(2),
+			totalTrades: totalTrades,
+			percentProfitable: percentProfitable,
 			numberWinningTrades: numberWinningTrades,
 			numberLosingTrades: numberLosingTrades,
-			largestWinningTrade: largestWinningTrade,
-			largestLosingTrade: largestLosingTrade,
-			averageWinningTrade: numberWinningTrades > 0 ? parseFloat((totalWinningTrades / numberWinningTrades).toFixed(2)) : 0,
-			averageLosingTrade: numberLosingTrades > 0 ? parseFloat((totalLosingTrades / numberLosingTrades).toFixed(2)) : 0,
+			largestWinningTrade: largestWinningTrade === -Infinity ? 0 : largestWinningTrade.toFixed(2),
+			largestLosingTrade: largestLosingTrade === Infinity ? 0 : largestLosingTrade.toFixed(2),
+			avgWinningTrade: avgWinningTrade,
+			avgLosingTrade: avgLosingTrade,
 		},
 	});
 });
