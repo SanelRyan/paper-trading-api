@@ -28,6 +28,7 @@ app.get("/createAccount", (req, res) => {
 		uuid: accountUuid,
 		name: accountName,
 		balance: Number(startingBalance),
+		startingBalance: Number(startingBalance),
 		creationTime: creationTime,
 		currentTrade: {},
 		positionHistory: [],
@@ -501,9 +502,9 @@ app.get("/getCumulativeBalance", (req, res) => {
 	}
 
 	const accountData = JSON.parse(fs.readFileSync(filePath));
-	const { balance, positionHistory } = accountData;
+	const { startingBalance, positionHistory } = accountData;
 
-	let cumulativeBalance = balance;
+	let cumulativeBalance = startingBalance;
 	let balanceHistory = [{ date: accountData.creationTime, balance: cumulativeBalance }];
 
 	positionHistory.forEach((trade) => {
