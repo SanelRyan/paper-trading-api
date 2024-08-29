@@ -11,6 +11,19 @@ const port = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+function calculatePnL(entryPrice, exitPrice, usdtAmount, leverage, longType) {
+	const isLong = longType == "l" ? true : false;
+	const positionSize = (usdtAmount * leverage) / entryPrice;
+	const priceChange = (exitPrice - entryPrice) * (isLong ? 1 : -1);
+	const pnl = priceChange * positionSize;
+	const pnlPercentage = (pnl / usdtAmount) * 100;
+
+	return {
+		pnl,
+		pnlPercentage,
+	};
+}
+
 app.get("/createAccount", (req, res) => {
 	const { accountName, startingBalance } = req.query;
 
@@ -125,11 +138,12 @@ app.post("/exitTrade", (req, res) => {
 
 	const { entryPrice, leverage, margin, positionSize, type: long_short, stopLoss, takeProfit } = currentTrade;
 	let pnl;
+	let percentage_pnl;
 
-	if (long_short === "l") {
-		pnl = parseFloat((((exit_price - entryPrice) * positionSize) / entryPrice).toFixed(2));
-	} else if (long_short === "s") {
-		pnl = parseFloat((((entryPrice - exit_price) * positionSize) / entryPrice).toFixed(2));
+	if (long_short === "l" || long_short === "s") {
+		let calculatedPNL = calculatePnL(entryPrice, exit_price, margin, leverage, long_short);
+		pnl = Number(calculatedPNL.pnl.toFixed(2));
+		percentage_pnl = Number(calculatedPNL.pnlPercentage.toFixed(2));
 	} else {
 		return res.status(400).json({
 			success: false,
@@ -137,7 +151,6 @@ app.post("/exitTrade", (req, res) => {
 		});
 	}
 
-	const percentage_pnl = parseFloat(((pnl / margin) * 100).toFixed(2));
 	const trade_record = {
 		pnl: pnl,
 		percentage_pnl: percentage_pnl,
@@ -470,7 +483,7 @@ app.get("/getCurrentTrade", (req, res) => {
 	const currentTrade = accountData.currentTrade;
 
 	if (!currentTrade || Object.keys(currentTrade).length === 0) {
-		return res.status(404).json({
+		return res.status(200).json({
 			success: false,
 			message: "No active trade found",
 		});
