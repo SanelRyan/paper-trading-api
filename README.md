@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Paper Trading API is a Node.js-based application designed for simulating cryptocurrency trades using real-time market data from Binance. This API currently works exclusively for BTCUSDT, allowing users to create accounts, execute trades, monitor active trades, and retrieve trade histories, making it a useful tool for testing trading strategies without the risk of actual financial loss.
+📄 The Paper Trading API is a Node.js-based application designed for simulating cryptocurrency trades using real-time market data from Binance. This API currently works exclusively for BTCUSDT, allowing users to create accounts, execute trades, monitor active trades, and retrieve trade histories, making it a useful tool for testing trading strategies without the risk of actual financial loss.
 
 ## Features
 
